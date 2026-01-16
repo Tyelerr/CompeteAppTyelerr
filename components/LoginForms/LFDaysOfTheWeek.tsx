@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { BaseColors, BasePaddingsMargins, TextsSizes } from '../../hooks/Template';
+import {
+  BaseColors,
+  BasePaddingsMargins,
+  TextsSizes,
+} from '../../hooks/Template';
 import { StyleZ } from '../../assets/css/styles';
 
 interface LFDaysOfTheWeekProps {
@@ -27,9 +31,14 @@ interface LFDaysOfTheWeekProps {
    */
   onDayPress?: (dayLetter: string, index: number) => void;
 
-
-  set_selectedDaysOut?: (daysIndexes:number[])=>void;
-  selectedDaysOut?: number[]
+  /**
+   * Callback to set selected days (0-based indexing: 0=Monday, 6=Sunday)
+   */
+  set_selectedDaysOut?: (daysIndexes: number[]) => void;
+  /**
+   * Array of selected day indices (0-based indexing: 0=Monday, 6=Sunday)
+   */
+  selectedDaysOut?: number[];
 }
 
 const LFDaysOfTheWeek: React.FC<LFDaysOfTheWeekProps> = ({
@@ -39,70 +48,94 @@ const LFDaysOfTheWeek: React.FC<LFDaysOfTheWeekProps> = ({
   activeDayIndex,
   onDayPress,
   set_selectedDaysOut,
-  selectedDaysOut
+  selectedDaysOut,
 }) => {
-  // Array of single letters for days of the week, starting from Monday
-  const days = ['M', 'T', 'W', 'T', 'F', 'Sa', 'Su']; // Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+  // Array of abbreviations for days of the week, starting from Monday
+  // Index 0 = Monday, Index 1 = Tuesday, ..., Index 6 = Sunday
+  const days = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su']; // Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
 
-  const [selectedDays, set_selectedDays] = useState<number[]>(selectedDaysOut!==undefined?selectedDaysOut:[]);
+  // Use 0-based indexing consistently (0=Monday, 6=Sunday)
+  const [selectedDays, set_selectedDays] = useState<number[]>(
+    selectedDaysOut || [],
+  );
 
-  // // // // // console.log('selectedDaysOut 2 inside LFDaysOfTheWeek:', selectedDaysOut);
+  // Sync local state with props when props change
+  useEffect(() => {
+    if (selectedDaysOut !== undefined) {
+      set_selectedDays(selectedDaysOut);
+    }
+  }, [selectedDaysOut]);
 
-  const __selectedDays = ():number[]=>{
-    return (selectedDaysOut!==undefined?selectedDaysOut:selectedDays);
-  }
+  // Get current selected days - prioritize props over local state
+  const getCurrentSelectedDays = (): number[] => {
+    return selectedDaysOut !== undefined ? selectedDaysOut : selectedDays;
+  };
 
-  useEffect(()=>{
-    // // // // // console.log('selectedDaysOut inside LFDaysOfTheWeek:', selectedDaysOut);
-  }, [])
+  // Handle day selection/deselection
+  const handleDayPress = (dayLetter: string, dayIndex: number) => {
+    // Call optional onDayPress callback
+    if (onDayPress !== undefined) {
+      onDayPress(dayLetter, dayIndex);
+    }
+
+    const currentSelected = getCurrentSelectedDays();
+    let newSelected: number[];
+
+    if (currentSelected.includes(dayIndex)) {
+      // Day is selected, remove it
+      newSelected = currentSelected.filter((day) => day !== dayIndex);
+    } else {
+      // Day is not selected, add it
+      newSelected = [...currentSelected, dayIndex];
+    }
+
+    // Update local state
+    set_selectedDays(newSelected);
+
+    // Update parent component
+    if (set_selectedDaysOut !== undefined) {
+      set_selectedDaysOut(newSelected);
+    }
+  };
 
   return (
-    <View style={[
-      {
-        marginBottom: BasePaddingsMargins.loginFormInputHolderMargin
-      }
-    ]}>
+    <View
+      style={[
+        {
+          marginBottom: BasePaddingsMargins.loginFormInputHolderMargin,
+        },
+      ]}
+    >
       <Text style={StyleZ.loginFormInputLabel}>Days of Week</Text>
       <View style={[stylesLocalDaysOfWeek.container, containerStyle]}>
-      {days.map((day, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              stylesLocalDaysOfWeek.touchableDay,
-              __selectedDays().indexOf(index+1)!==-1 && stylesLocalDaysOfWeek.activeDayText
-            ]} // Apply a base style for touchable area
-            onPress={() => {
-              if(onDayPress!==undefined){
-                onDayPress(day, index);
-              }
-              if(__selectedDays().indexOf(index+1)!==-1){
-                __selectedDays().splice(selectedDays.indexOf(index+1), 1);
-              }
-              else{
-                __selectedDays().push(index+1);
-              }
-              set_selectedDays([...__selectedDays()]);
-              if(set_selectedDaysOut!==undefined)
-              set_selectedDaysOut([...__selectedDays()]);
-            }}
-            activeOpacity={0.7} // Opacity effect when pressed
-          >
-            <Text
+        {days.map((day, index) => {
+          const isSelected = getCurrentSelectedDays().includes(index);
+
+          return (
+            <TouchableOpacity
+              key={index}
               style={[
-                stylesLocalDaysOfWeek.dayText,
-                dayTextStyle,
-                // activeDayIndex === index && stylesLocalDaysOfWeek.activeDayText, // Apply active style if index matches
-                // activeDayIndex === index && activeDayTextStyle, // Apply custom active style
-                __selectedDays().indexOf(index+1)!==-1 && stylesLocalDaysOfWeek.activeDayText,
-                {
-                  backgroundColor: 'transparent'
-                }
+                stylesLocalDaysOfWeek.touchableDay,
+                isSelected && stylesLocalDaysOfWeek.activeDayText,
               ]}
+              onPress={() => handleDayPress(day, index)}
+              activeOpacity={0.7}
             >
-              {day}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  stylesLocalDaysOfWeek.dayText,
+                  dayTextStyle,
+                  isSelected && stylesLocalDaysOfWeek.activeDayText,
+                  {
+                    backgroundColor: 'transparent',
+                  },
+                ]}
+              >
+                {day}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -132,7 +165,7 @@ const stylesLocalDaysOfWeek = StyleSheet.create({
     borderColor: BaseColors.othertexts,
     borderWidth: 1,
     borderRadius: 5,
-    paddingBlock: BasePaddingsMargins.m5
+    paddingBlock: BasePaddingsMargins.m5,
   },
   dayText: {
     fontSize: TextsSizes.small,

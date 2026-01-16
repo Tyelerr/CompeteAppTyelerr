@@ -1,9 +1,9 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
 import {
   BaseColors,
   BasePaddingsMargins,
   TextsSizes,
-} from "../../hooks/Template";
+} from '../../hooks/Template';
 
 export const StyleZ = StyleSheet.create({
   colors: {
@@ -12,16 +12,16 @@ export const StyleZ = StyleSheet.create({
   },
 
   test: {
-    backgroundColor: "red",
+    backgroundColor: 'red',
   },
   testText: {
-    color: "yellow",
+    color: 'yellow',
   },
 
   hr: {
     borderBottomColor: BaseColors.secondary,
     borderBottomWidth: 1,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     marginBottom: BasePaddingsMargins.loginFormInputHolderMargin,
   },
 
@@ -38,23 +38,23 @@ export const StyleZ = StyleSheet.create({
   h2: {
     fontSize: TextsSizes.h2,
     color: BaseColors.light,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: BasePaddingsMargins.m15,
   },
   h3: {
     fontSize: TextsSizes.h3,
     color: BaseColors.light,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: BasePaddingsMargins.m15,
   },
   h4: {
     fontSize: TextsSizes.h4,
-    fontWeight: "600",
+    fontWeight: '600',
     color: BaseColors.light,
   },
   h5: {
     fontSize: TextsSizes.h5,
-    fontWeight: "600",
+    fontWeight: '600',
     color: BaseColors.light,
   },
   p: {
@@ -66,9 +66,9 @@ export const StyleZ = StyleSheet.create({
   contentSwitcherButton: {
     color: BaseColors.light,
     backgroundColor: BaseColors.contentSwitcherBackgroundCOlor,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingInline: 12,
     paddingBlock: 6,
     borderRadius: 4,
@@ -80,9 +80,9 @@ export const StyleZ = StyleSheet.create({
   },
 
   tabBarIcon: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingInline: 10,
     paddingBlock: 5,
     marginBottom: 0,
@@ -91,41 +91,51 @@ export const StyleZ = StyleSheet.create({
   },
 
   loginFormHeading: {
-    width: "100%",
+    width: '100%',
     marginBottom: BasePaddingsMargins.sectionMarginBottom,
   },
   loginFromContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
     flex: 1,
   },
   loginForm: {
-    backgroundColor: "transparent",
-    width: "100%",
+    backgroundColor: BaseColors.dark,
+    width: '100%',
     maxWidth: 320,
+    padding: BasePaddingsMargins.m15,
+  },
+  loginForm_submitTournament: {
+    backgroundColor: BaseColors.dark,
+    width: '100%',
+    maxWidth: 362, // 13% increase from 320 (320 * 1.13 = 361.6, rounded to 362)
+    padding: BasePaddingsMargins.m15,
   },
   loginFormInput: {
     color: BaseColors.othertexts,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     borderRadius: 5,
     borderColor: BaseColors.othertexts,
     borderWidth: 1,
-    width: "100%",
+    width: '100%',
+    height: 50, // Fixed height to prevent growing
     paddingBlock: BasePaddingsMargins.m10,
     paddingHorizontal: 15,
     fontSize: TextsSizes.p,
   },
   loginFormInput_Textarea: {
-    minHeight: 70,
+    minHeight: 120,
+    height: 120,
+    paddingTop: 15,
   },
 
   loginFormInputHolder: {
-    width: "100%",
+    width: '100%',
     marginBottom: BasePaddingsMargins.loginFormInputHolderMargin,
   },
   loginFormInputHolder_onlyRead: {
-    pointerEvents: "none",
+    pointerEvents: 'none',
   },
   loginFormInput_onlyRead: {
     backgroundColor: BaseColors.secondary,
@@ -134,36 +144,42 @@ export const StyleZ = StyleSheet.create({
 
   loginFormInputLabel: {
     color: BaseColors.othertexts,
-    width: "100%",
-    display: "flex",
+    width: '100%',
+    display: 'flex',
     marginBottom: 5,
   },
 
   LFButtonContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
   LFBUtton: {
-    backgroundColor: "silver",
+    backgroundColor: 'silver',
     fontSize: 15,
-    display: "flex",
-    paddingInline: 15,
-    paddingBlock: 14,
+    display: 'flex',
+    paddingHorizontal: 15,
+    paddingVertical: 14,
     borderRadius: 5,
-    justifyContent: "center",
-    flexDirection: "row",
-    textAlign: "center",
+    justifyContent: 'center',
+    flexDirection: 'row',
+    textAlign: 'center',
+    minHeight: 48,
   },
   LFBUtton_Small: {
     fontSize: 15,
-    paddingInline: 3,
-    paddingBlock: 10,
+    paddingHorizontal: 3,
+    paddingVertical: 10,
+  },
+  LFBUtton_Compact: {
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   LFBUtton_Bigger: {
     fontSize: TextsSizes.h1,
-    paddingInline: 15,
-    paddingBlock: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
 
   /// Different styles start
@@ -179,7 +195,7 @@ export const StyleZ = StyleSheet.create({
     backgroundColor: BaseColors.dark,
     borderWidth: 1,
     borderColor: BaseColors.PanelBorderColor,
-    borderStyle: "solid",
+    borderStyle: 'solid',
   },
   LFButtonOutlineDarkPressed: {
     backgroundColor: BaseColors.PanelBorderColor,
@@ -206,31 +222,83 @@ export const StyleZ = StyleSheet.create({
     backgroundColor: BaseColors.success,
   },
   LFButtonSuccessPressed: {
-    backgroundColor: "#15803d", // darker green for press feedback
+    backgroundColor: '#15803d', // darker green for press feedback
   },
   /// Different styles end
 
   LFForgotPasswordLink_Container: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: BasePaddingsMargins.m15,
   },
   LFForgotPasswordLink: {
-    color: BaseColors.othertexts,
-    fontWeight: "bold",
+    color: BaseColors.light,
+    fontWeight: 'bold',
+    fontSize: TextsSizes.p,
+    paddingVertical: BasePaddingsMargins.m5,
+    paddingHorizontal: BasePaddingsMargins.m15,
+    borderRadius: 6,
+    borderWidth: 0,
+    backgroundColor: BaseColors.primary,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    overflow: 'hidden',
+    minHeight: 36,
+    maxWidth: 200,
+    alignSelf: 'center',
+    lineHeight: 36,
+    includeFontPadding: false,
+  },
+  LFForgotPasswordLink_Pressed: {
+    backgroundColor: BaseColors.primaryPressed,
+    color: BaseColors.light,
+  },
+  LFForgotPasswordLink_Enhanced: {
+    shadowColor: BaseColors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  LFForgotPasswordLink_Danger: {
+    backgroundColor: BaseColors.danger,
+    color: BaseColors.light,
+  },
+  LFForgotPasswordLink_DangerPressed: {
+    backgroundColor: BaseColors.dangerPressed,
+    color: BaseColors.light,
   },
   LFErrorMessage: {
-    color: "#DC3545",
-    display: "flex",
+    color: '#DC3545',
+    display: 'flex',
     paddingTop: 5,
-    width: "100%",
+    width: '100%',
   },
   LFErrorMessage_addon_centered: {
-    justifyContent: "center",
-    textAlign: "center",
-    flexWrap: "wrap",
+    justifyContent: 'center',
+    textAlign: 'center',
+    flexWrap: 'wrap',
     marginBottom: BasePaddingsMargins.sectionMarginBottom,
     maxWidth: 250,
+  },
+  // Pagination (Billiards tournaments)
+  pageArrow: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'transparent',
+    marginLeft: 6,
+  },
+  pageArrowDisabled: {
+    opacity: 0.3,
+  },
+  pageText: {
+    color: '#E5E7EB',
+    fontSize: 14,
+    marginHorizontal: 8,
   },
 });
 
@@ -251,15 +319,15 @@ export const StylePanel = StyleSheet.create({
 export const StyleBadge = StyleSheet.create({
   defaultStyle: {
     backgroundColor: BaseColors.dark,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     borderColor: BaseColors.secondary,
     borderWidth: 1,
     borderRadius: 15,
     paddingInline: 20,
     paddingBlock: 5,
-    display: "flex",
-    justifyContent: "center",
-    width: "auto",
+    display: 'flex',
+    justifyContent: 'center',
+    width: 'auto',
   },
 
   sizeSmall: {
@@ -270,8 +338,8 @@ export const StyleBadge = StyleSheet.create({
   defaultTextStyle: {
     fontSize: TextsSizes.p,
     color: BaseColors.light,
-    textAlign: "center",
-    width: "100%",
+    textAlign: 'center',
+    width: '100%',
   },
   secondary: {
     backgroundColor: BaseColors.secondary,
@@ -288,8 +356,8 @@ export const StyleBadge = StyleSheet.create({
     color: BaseColors.light,
   },
   primaryOutline: {
-    backgroundColor: "transparent",
-    borderStyle: "solid",
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
     borderWidth: 1,
     borderColor: BaseColors.primary,
   },
@@ -301,44 +369,100 @@ export const StyleBadge = StyleSheet.create({
 export const StyleModal = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,.7)",
-    width: "100%",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,.7)',
+    width: '100%',
   },
   containerForScrollingView: {
-    maxHeight: "90%",
-    width: "95%",
+    maxHeight: '80%',
+    width: '90%',
+    maxWidth: 600, // Limit max width for larger screens
     backgroundColor: BaseColors.dark,
-    position: "relative",
+    position: 'relative',
+    borderRadius: BasePaddingsMargins.m15,
+  },
+  // New fixed layout styles
+  containerForFixedLayout: {
+    height: '80%',
+    width: '90%',
+    maxWidth: 600,
+    backgroundColor: BaseColors.dark,
+    position: 'relative',
+    borderRadius: BasePaddingsMargins.m15,
+    flexDirection: 'column',
+  },
+  fixedHeader: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+    paddingHorizontal: 16,
+    paddingTop: 25,
+    paddingBottom: 15,
+    borderTopLeftRadius: BasePaddingsMargins.m15,
+    borderTopRightRadius: BasePaddingsMargins.m15,
+    backgroundColor: BaseColors.dark,
+    zIndex: 1000,
+    minHeight: 60,
+    position: 'relative',
+    overflow: 'hidden',
+    elevation: 5,
+  },
+  fixedFooter: {
+    paddingHorizontal: 16,
+    paddingTop: 15,
+    paddingBottom: 25,
+    borderBottomLeftRadius: BasePaddingsMargins.m15,
+    borderBottomRightRadius: BasePaddingsMargins.m15,
+    backgroundColor: BaseColors.dark,
+    zIndex: 1000,
+    minHeight: 80,
+  },
+  scrollableContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    minHeight: 400,
   },
   scrollView: {
     paddingInline: 16,
-    height: "100%",
-    maxHeight: "100%",
+    height: '100%',
+    maxHeight: '100%',
   },
   headingContainer: {
     marginBottom: BasePaddingsMargins.m20,
   },
   heading: {
     fontSize: TextsSizes.h3,
-    fontWeight: "bold",
-    width: "100%",
-    textAlign: "left",
+    fontWeight: 'bold',
+    width: '100%',
+    textAlign: 'left',
     color: BaseColors.light,
   },
   contentView: {
-    width: "100%",
+    width: '100%',
     paddingBlock: 25,
   },
   closeButtonContainer: {
-    position: "absolute",
-    right: -15,
-    top: 0,
-    width: 60,
-    height: 50,
-    justifyContent: "center",
+    position: 'absolute',
+    right: 16,
+    top: 25,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 100000,
+  },
+  // Close button for fixed header
+  closeButtonFixed: {
+    position: 'absolute',
+    right: 16,
+    top: 25,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10000,
+    elevation: 10000,
   },
 
   ModalInfoMessageContainer: {
@@ -347,17 +471,18 @@ export const StyleModal = StyleSheet.create({
     padding: BasePaddingsMargins.m15,
     borderWidth: 1,
     borderColor: BaseColors.secondary,
-    borderStyle: "solid",
+    borderStyle: 'solid',
     borderRadius: 5,
   },
 
   backgroundTouchableForClosing: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     top: 0,
-    width: "100%",
-    height: "100%",
-    display: "flex",
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    zIndex: -1,
   },
 });
 
@@ -367,12 +492,12 @@ export const StyleZTable = StyleSheet.create({
   headerTexts: {
     color: BaseColors.othertexts,
     fontSize: TextsSizes.p,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   row: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    justifyContent: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
   },
   cell: {
     paddingInline: 7,
@@ -385,8 +510,8 @@ export const StyleZTable = StyleSheet.create({
     paddingRight: 0,
   },
   cellCentered: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
@@ -417,7 +542,7 @@ export const StyleTournamentsAdmin = StyleSheet.create({
   title: {
     color: BaseColors.light,
     fontSize: TextsSizes.h4,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBlock: BasePaddingsMargins.m15,
   },
   titleV2: {
@@ -425,7 +550,7 @@ export const StyleTournamentsAdmin = StyleSheet.create({
   },
   image: {
     borderRadius: 10,
-    width: "100%",
+    width: '100%',
     height: 200,
     backgroundColor: BaseColors.secondary,
   },
@@ -433,8 +558,8 @@ export const StyleTournamentsAdmin = StyleSheet.create({
     height: 100,
   },
   badgesHolder: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   badgeHolder: {
     marginRight: BasePaddingsMargins.m10,
@@ -444,21 +569,21 @@ export const StyleTournamentsAdmin = StyleSheet.create({
 
 export const StyleTournamentAnalytics = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   cellTrophy: {
     width: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: BasePaddingsMargins.m5,
   },
   cellTexts: {},
   n: {
     color: BaseColors.light,
     fontSize: TextsSizes.h1,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   p: {
     color: BaseColors.othertexts,
@@ -472,39 +597,39 @@ export const StyleTournamentAnalytics = StyleSheet.create({
   TitleAnalyiticsBig: {
     fontSize: TextsSizes.h3,
     color: BaseColors.light,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: BasePaddingsMargins.formInputMarginLess,
   },
 
   ItemTexts: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: BasePaddingsMargins.formInputMarginLess,
   },
   ItemTexts_Cell1: {
-    width: "65%",
+    width: '65%',
   },
   ItemTexts_Cell2: {
-    width: "33%",
+    width: '33%',
   },
   ItemTexts_Title: {
     color: BaseColors.light,
     fontSize: TextsSizes.p,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   ItemTexts_Value: {
     color: BaseColors.light,
     fontSize: TextsSizes.h4,
-    fontWeight: "bold",
-    textAlign: "right",
+    fontWeight: 'bold',
+    textAlign: 'right',
   },
 });
 
 export const StyleProgress = StyleSheet.create({
   container: {
     backgroundColor: BaseColors.secondary,
-    position: "relative",
+    position: 'relative',
     height: BasePaddingsMargins.m10,
     borderRadius: 0.5 * BasePaddingsMargins.m10,
   },
@@ -512,7 +637,7 @@ export const StyleProgress = StyleSheet.create({
     backgroundColor: BaseColors.primary,
     left: 0,
     top: 0,
-    width: "0%",
+    width: '0%',
     height: BasePaddingsMargins.m10,
     borderRadius: 0.5 * BasePaddingsMargins.m10,
   },
@@ -524,24 +649,24 @@ export const StyleSlider = StyleSheet.create({
   },
   titleContainer: {
     marginBottom: BasePaddingsMargins.m10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: TextsSizes.p,
     color: BaseColors.light,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   singleValue: {
     fontSize: TextsSizes.p,
     color: BaseColors.light,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   footer_measures: {
     marginTop: BasePaddingsMargins.m5,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   footer_measures_text: {
     color: BaseColors.othertexts,
@@ -551,30 +676,43 @@ export const StyleSlider = StyleSheet.create({
 
 export const StyleThumbnailSelector = StyleSheet.create({
   thumb: {
-    position: "relative",
+    position: 'relative',
     width: 136,
     height: 136,
-    overflow: "hidden",
+    overflow: 'hidden',
     borderWidth: 2,
     borderColor: BaseColors.othertexts,
-    borderStyle: "solid",
+    borderStyle: 'solid',
+    backgroundColor: BaseColors.secondary,
+    borderRadius: 10,
+    marginBottom: BasePaddingsMargins.m10,
+    marginRight: BasePaddingsMargins.m10,
+  },
+  thumb_submitTournament: {
+    position: 'relative',
+    width: 154, // 13% increase from 136 (136 * 1.13 = 153.68, rounded to 154)
+    height: 154, // Keep it square
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: BaseColors.othertexts,
+    borderStyle: 'solid',
     backgroundColor: BaseColors.secondary,
     borderRadius: 10,
     marginBottom: BasePaddingsMargins.m10,
     marginRight: BasePaddingsMargins.m10,
   },
   thumb_file: {
-    borderStyle: "dotted",
+    borderStyle: 'dotted',
   },
   thumb_active: {
     borderColor: BaseColors.primary,
     borderWidth: 4,
   },
   image: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     top: 0,
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
 });

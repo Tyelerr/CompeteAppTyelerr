@@ -1,81 +1,109 @@
-import { View, Text } from "react-native";
-import { StyleZ } from "../../../assets/css/styles";
-import { BasePaddingsMargins } from "../../../hooks/Template";
-import LFButton from "../../LoginForms/Button/LFButton";
+import { View, Text, TouchableOpacity } from 'react-native';
+import { StyleZ } from '../../../assets/css/styles';
+import { BasePaddingsMargins } from '../../../hooks/Template';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function Pagination(
+export default function Pagination({
+  totalCount,
+  offset,
+  countPerPage,
+  FLoadDataByOffset,
+  currentItemsCount,
+  guardrailTriggered, // BUILD 204: Add this prop
+}: {
+  totalCount: number;
+  offset: number;
+  countPerPage: number;
+  FLoadDataByOffset?: (n?: number) => void;
+  currentItemsCount?: number;
+  guardrailTriggered?: boolean; // BUILD 204: Add this prop
+}) {
+  const __totalPages = (): number => {
+    return Math.ceil(totalCount / countPerPage);
+  };
 
-  {
-    totalCount,
-    offset,
-    countPerPage,
-    FLoadDataByOffset
-  }
-  :
-  {
-    totalCount: number,
-    offset: number,
-    countPerPage: number,
-    FLoadDataByOffset?: (n?:number)=>void
-  }
+  const __currentPage = (): number => {
+    return Math.floor(offset / countPerPage) + 1;
+  };
 
-){
-
-
-  const __totalPages = ():number=>{
-    const total_pages:number = Math.floor( totalCount / countPerPage );
-    return ( total_pages>=totalCount / countPerPage?total_pages:total_pages+1 );
-  }
-
-  return <View style={[
-    {
-      marginBottom: BasePaddingsMargins.m15,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      height: 40
+  const __displayRange = (): string => {
+    // BUILD 200 FIX: Only check currentItemsCount (actual items on page)
+    // Don't check totalCount - it might be 0 due to state timing issues
+    if (currentItemsCount !== undefined && currentItemsCount === 0) {
+      return '0-0';
     }
-  ]}>
 
-    <Text style={StyleZ.p}>Total Count: {totalCount}</Text>
+    // If we have items, always show the range based on actual items
+    const start = offset + 1;
+    const end = currentItemsCount
+      ? offset + currentItemsCount
+      : Math.min(offset + countPerPage, totalCount);
+    return `${start}-${end}`;
+  };
 
-    {
-      __totalPages()>1?
-      <View style={[
+  return (
+    <View
+      style={[
         {
+          marginBottom: BasePaddingsMargins.m15,
           flexDirection: 'row',
-          alignItems: 'center'
-        }
-      ]}>
-        <View style={[
-          {
-            width: 40,
-          },
-          (offset===0?{pointerEvents: 'none'}:null)
-        ]}>
-          <LFButton type={offset===0?'dark':'primary'} icon="chevron-back" size="small" onPress={()=>{
-            if(FLoadDataByOffset!==undefined)
-            FLoadDataByOffset( offset - 1 );
-          }} />
-        </View>
-        <Text style={[
-          StyleZ.p,
-          {
-            marginInline: BasePaddingsMargins.m10
-          }
-        ]}>Page {offset+1} / {__totalPages()}</Text>
-        <View style={[
-          {width: 40},
-          (offset+1===__totalPages()?{pointerEvents: 'none'}:null)
-        ]}>
-          <LFButton type={offset+1===__totalPages()?'dark':'primary'} icon="chevron-forward" size="small" onPress={()=>{
-            if(FLoadDataByOffset!==undefined)
-              FLoadDataByOffset( offset + 1 );
-          }} />
-        </View>
-      </View>:
-      null
-    }
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          height: 40,
+        },
+      ]}
+    >
+      <Text style={StyleZ.p}>
+        Total count: {totalCount} Displaying {__displayRange()}
+      </Text>
 
-  </View>
+      {(() => {
+        // BUILD 204: Smart arrow logic that works with fallback counts
+        const hasPrev = offset > 0;
+        const hasNextReal = offset + (currentItemsCount || 0) < totalCount;
+        const hasMoreGuess = (currentItemsCount || 0) === countPerPage;
+        const hasNext = guardrailTriggered ? hasMoreGuess : hasNextReal;
+        const showArrows = hasPrev || hasNext;
+
+        return showArrows ? (
+          <View
+            style={[
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+              },
+            ]}
+          >
+            <TouchableOpacity
+              disabled={!hasPrev}
+              onPress={() => {
+                if (FLoadDataByOffset !== undefined) {
+                  const newOffset = offset - countPerPage;
+                  FLoadDataByOffset(newOffset >= 0 ? newOffset : 0);
+                }
+              }}
+              style={[StyleZ.pageArrow, !hasPrev && StyleZ.pageArrowDisabled]}
+            >
+              <Ionicons name="chevron-back" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+            <Text style={[StyleZ.pageText]}>
+              Page {__currentPage()} / {__totalPages()}
+            </Text>
+            <TouchableOpacity
+              disabled={!hasNext}
+              onPress={() => {
+                if (FLoadDataByOffset !== undefined && hasNext) {
+                  const newOffset = offset + countPerPage;
+                  FLoadDataByOffset(newOffset);
+                }
+              }}
+              style={[StyleZ.pageArrow, !hasNext && StyleZ.pageArrowDisabled]}
+            >
+              <Ionicons name="chevron-forward" size={20} color="#60A5FA" />
+            </TouchableOpacity>
+          </View>
+        ) : null;
+      })()}
+    </View>
+  );
 }

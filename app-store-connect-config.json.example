@@ -1,0 +1,6 @@
+{
+  "issuerId": "your-issuer-id-here",
+  "keyId": "your-key-id-here",
+  "privateKeyPath": "./keys/AuthKey_KEYID.p8",
+  "bundleId": "com.tyelerr.app"
+}

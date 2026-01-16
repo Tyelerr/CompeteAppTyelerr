@@ -1,0 +1,44 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "local",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "node": "22.11.0",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "node": "22.11.0",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "channel": "preview"
+    },
+    "production": {
+      "node": "22.11.0",
+      "ios": {
+        "resourceClass": "m-medium",
+        "image": "latest"
+      },
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_USE_FAST_RESOLVER": "1"
+      },
+      "cache": {
+        "disabled": true
+      },
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

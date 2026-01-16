@@ -1,9 +1,9 @@
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Text } from "react-native";
-import StackHeader from "./StackHeader";
-import ScreenBilliardHome from "../screens/Billiard/ScreenBilliardHome";
-import ScreenDailyTournaments from "../screens/Billiard/ScreenDailyTournaments";
-import ScreenFargoRatedTournaments from "../screens/Billiard/ScreenFargoRatedTournaments";
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Text } from 'react-native';
+import StackHeader from './StackHeader';
+import ScreenBilliardHome from '../screens/Billiard/ScreenBilliardHome';
+import ScreenDailyTournaments from '../screens/Billiard/ScreenDailyTournaments';
+import ScreenFargoRatedTournaments from '../screens/Billiard/ScreenFargoRatedTournaments';
 
 const Stack = createNativeStackNavigator();
 
@@ -11,13 +11,13 @@ const ExampleScreen = () => {
   return <Text>Example screen</Text>;
 };
 
-export default function StackBilliards({ navigation, route }) {
+export default function StackBilliards({ navigation, route }: any) {
   // const navigation = useNavigation();
   // const route = useRoute();
 
   const ArrayBilliardsScreens = [
     {
-      name: "BilliardHome",
+      name: 'BilliardHome',
       component: ScreenBilliardHome,
       header: (
         <StackHeader
@@ -28,7 +28,7 @@ export default function StackBilliards({ navigation, route }) {
       ),
     },
     {
-      name: "BilliardDailyTournaments",
+      name: 'BilliardDailyTournaments',
       component: ScreenDailyTournaments,
       header: (
         <StackHeader
@@ -39,7 +39,7 @@ export default function StackBilliards({ navigation, route }) {
       ),
     },
     {
-      name: "BilliardFargoRated",
+      name: 'BilliardFargoRated',
       component: ScreenFargoRatedTournaments,
       header: (
         <StackHeader
@@ -70,7 +70,7 @@ export default function StackBilliards({ navigation, route }) {
     <Stack.Navigator
       initialRouteName="BilliardHome"
       screenOptions={{
-        animation: "none",
+        animation: 'none',
         animationDuration: 0,
         // statusBarAnimation: 'none',
       }}

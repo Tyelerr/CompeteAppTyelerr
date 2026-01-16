@@ -1,8 +1,8 @@
 export type TRootStackParamList = {
   Home: undefined; // Home screen takes no params directly, but it's part of the stack
-  Billiards: undefined,
-  Profile: undefined,
-  FAQ: undefined,
+  Billiards: undefined;
+  Profile: undefined;
+  FAQ: undefined;
   Details: { itemId: number; otherParam: string };
 };
 
@@ -12,11 +12,12 @@ export type TRootTabParamList = {
   ProfileTab: undefined;
   FAQTab: undefined;
   AdminTab: undefined;
+  BarOwnerTab: undefined;
   ProfileLoggedTab: undefined;
   SubmitTab: undefined;
+  ShopTab: undefined;
   // SettingsTab: undefined;
 };
-
 
 export interface ICustomHeaderTitleProps {
   title: string;

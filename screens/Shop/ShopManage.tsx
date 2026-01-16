@@ -1,26 +1,48 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import UIPanel from "../../components/UI/UIPanel";
-import LFButton from "../../components/LoginForms/Button/LFButton";
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
+import UIPanel from '../../components/UI/UIPanel';
+import LFButton from '../../components/LoginForms/Button/LFButton';
 import {
   BaseColors,
   BasePaddingsMargins,
   TextsSizes,
-} from "../../hooks/Template";
-import { Ionicons } from "@expo/vector-icons";
+} from '../../hooks/Template';
+import { Ionicons } from '@expo/vector-icons';
+import type { KeyboardTypeOptions } from 'react-native';
 
 /* ----------------------------------------------------------------------------
   Types
 ---------------------------------------------------------------------------- */
-type GiveawayStatus = "active" | "ended" | "scheduled";
+type GiveawayStatus = 'active' | 'ended' | 'scheduled';
+
+interface RawGiveaway {
+  id: string;
+  numeric_id?: number;
+  title: string;
+  prize_value?: number;
+  status: string;
+  end_at?: string;
+  entries_count: number;
+  image_url?: string;
+  description?: string;
+  winner_entry_id?: string | null;
+}
+
+interface RawEntry {
+  id: string;
+  user_id?: string;
+  name?: string;
+  email?: string;
+}
 
 export interface IGiveaway {
   id: string;
@@ -42,88 +64,97 @@ export interface IEntry {
 }
 
 /* ----------------------------------------------------------------------------
-  API - Default in-memory implementation (works immediately)
-  Swap these with your Supabase calls later (same signatures).
+  API - Real Supabase implementation
 ---------------------------------------------------------------------------- */
-const memoryDB = {
-  giveaways: [
-    {
-      id: "g1",
-      title: "Premium Pool Cue Giveaway",
-      prizeValue: 500,
-      status: "active" as GiveawayStatus,
-      endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
-      entriesCount: 347,
-      imageUrl: "",
-      description: "Win a professional-grade Predator pool cue.",
-      winnerEntryId: null,
-    },
-    {
-      id: "g2",
-      title: "Professional Tournament Set",
-      prizeValue: 300,
-      status: "ended" as GiveawayStatus,
-      endAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
-      entriesCount: 0,
-      imageUrl: "",
-      description: "Ended example giveaway.",
-      winnerEntryId: "e-2-13",
-    },
-  ] as IGiveaway[],
-  entries: {
-    g1: Array.from({ length: 347 }, (_, i) => ({
-      id: `e-1-${i + 1}`,
-      name: `User ${i + 1}`,
-      email: `user${i + 1}@example.com`,
-    })),
-    g2: Array.from({ length: 89 }, (_, i) => ({
-      id: `e-2-${i + 1}`,
-      name: `User ${i + 1}`,
-      email: `user${i + 1}@example.com`,
-    })),
-  } as Record<string, IEntry[]>,
-};
+import { supabase } from '../../ApiSupabase/supabase';
 
 const api = {
-  async list(): Promise<IGiveaway[]> {
-    // TODO: Swap with Supabase:
-    // const { data, error } = await supabase.from('giveaways').select('*')
-    // if (error) throw error;
-    // return data as IGiveaway[];
-    return JSON.parse(JSON.stringify(memoryDB.giveaways));
+  async list() {
+    const { data, error } = await supabase
+      .from('v_giveaways_with_counts')
+      .select(
+        'id, title, prize_value, status, end_at, description, winner_entry_id, entries_count, image_url',
+      )
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    const rawData = data as RawGiveaway[] | null;
+    return (
+      rawData?.map((item) => ({
+        id: item.id,
+        title: item.title,
+        prizeValue: item.prize_value,
+        status: item.status as GiveawayStatus,
+        endAt: item.end_at,
+        entriesCount: item.entries_count || 0,
+        imageUrl: item.image_url,
+        description: item.description,
+        winnerEntryId: item.winner_entry_id,
+      })) || []
+    );
   },
-  async create(input: Partial<IGiveaway>): Promise<IGiveaway> {
-    const g: IGiveaway = {
-      id: `g-${Date.now()}`,
-      title: input.title || "Untitled Giveaway",
-      prizeValue: input.prizeValue || 0,
-      status: input.status || "active",
-      endAt: input.endAt,
-      imageUrl: input.imageUrl,
-      description: input.description,
-      entriesCount: 0,
-      winnerEntryId: null,
+  async create(payload: Partial<IGiveaway>) {
+    const payloadForSupabase = {
+      title: payload.title,
+      prize_value: payload.prizeValue,
+      status: payload.status,
+      end_at: payload.endAt,
+      description: payload.description,
     };
-    memoryDB.giveaways.unshift(g);
-    return g;
+    const { data, error } = await supabase
+      .from('giveaways')
+      .insert([payloadForSupabase]);
+    if (error) throw error;
+    const rawItem = data?.[0] as RawGiveaway | undefined;
+    return rawItem
+      ? {
+          id: rawItem.id,
+          title: rawItem.title,
+          prizeValue: rawItem.prize_value,
+          status: rawItem.status as GiveawayStatus,
+          endAt: rawItem.end_at,
+          entriesCount: rawItem.entries_count || 0,
+          imageUrl: rawItem.image_url,
+          description: rawItem.description,
+          winnerEntryId: rawItem.winner_entry_id,
+        }
+      : null;
   },
-  async end(id: string): Promise<void> {
-    const g = memoryDB.giveaways.find((x) => x.id === id);
-    if (g) g.status = "ended";
+  async end(id: string) {
+    const { error } = await supabase
+      .from('giveaways')
+      .update({ status: 'ended' })
+      .eq('id', id);
+    if (error) throw error;
   },
-  async entries(giveawayId: string): Promise<IEntry[]> {
-    return JSON.parse(JSON.stringify(memoryDB.entries[giveawayId] || []));
+  async entries(giveawayId: string) {
+    const { data, error } = await supabase
+      .from('entries')
+      .select('*')
+      .eq('giveaway_id', giveawayId);
+    if (error) throw error;
+    const rawData = data as RawEntry[] | null;
+    return (
+      rawData?.map((item) => ({
+        id: item.id,
+        userId: item.user_id,
+        name: item.name,
+        email: item.email,
+      })) || []
+    );
   },
-  async setWinner(giveawayId: string, entryId: string): Promise<void> {
-    const g = memoryDB.giveaways.find((x) => x.id === giveawayId);
-    if (g) {
-      g.winnerEntryId = entryId;
-      g.status = "ended";
-    }
+  async setWinner(giveawayId: string, entryId: string) {
+    const { error } = await supabase
+      .from('giveaways')
+      .update({ winner_entry_id: entryId, status: 'ended' })
+      .eq('id', giveawayId);
+    if (error) throw error;
   },
-  async delete(giveawayId: string): Promise<void> {
-    const i = memoryDB.giveaways.findIndex((g) => g.id === giveawayId);
-    if (i >= 0) memoryDB.giveaways.splice(i, 1);
+  async delete(giveawayId: string) {
+    const { error } = await supabase
+      .from('giveaways')
+      .delete()
+      .eq('id', giveawayId);
+    if (error) throw error;
   },
 };
 
@@ -131,42 +162,42 @@ const api = {
   Small UI helpers
 ---------------------------------------------------------------------------- */
 const fmtMoney = (n?: number) =>
-  typeof n === "number"
+  typeof n === 'number'
     ? n.toLocaleString(undefined, {
-        style: "currency",
-        currency: "USD",
+        style: 'currency',
+        currency: 'USD',
         maximumFractionDigits: 0,
       })
-    : "";
+    : '';
 
 const fmtDate = (iso?: string) =>
   iso
     ? new Date(iso).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
+        month: 'short',
+        day: 'numeric',
       })
-    : "—";
+    : '—';
 
 const StatusPill = ({ s }: { s: GiveawayStatus }) => {
   const map =
-    s === "active"
-      ? { bg: "#022c22", text: "#34d399", label: "Active" }
-      : s === "scheduled"
-      ? { bg: "#1f2a44", text: "#93c5fd", label: "Scheduled" }
-      : { bg: "#2a1f1f", text: "#fca5a5", label: "Ended" };
+    s === 'active'
+      ? { bg: '#022c22', text: '#34d399', label: 'Active' }
+      : s === 'scheduled'
+      ? { bg: '#1f2a44', text: '#93c5fd', label: 'Scheduled' }
+      : { bg: '#2a1f1f', text: '#fca5a5', label: 'Ended' };
   return (
     <View
       style={{
         backgroundColor: map.bg,
-        borderColor: map.text + "66",
+        borderColor: map.text + '66',
         borderWidth: 1,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 999,
-        alignSelf: "flex-start",
+        alignSelf: 'flex-start',
       }}
     >
-      <Text style={{ color: map.text, fontWeight: "700", fontSize: 12 }}>
+      <Text style={{ color: map.text, fontWeight: '700', fontSize: 12 }}>
         {map.label}
       </Text>
     </View>
@@ -174,7 +205,7 @@ const StatusPill = ({ s }: { s: GiveawayStatus }) => {
 };
 
 /* ----------------------------------------------------------------------------
-  Create Giveaway Modal
+  Create Giveaway Modal — keyboard-stable
 ---------------------------------------------------------------------------- */
 function ModalCreateGiveaway({
   visible,
@@ -185,156 +216,239 @@ function ModalCreateGiveaway({
   onClose: () => void;
   onCreate: (payload: Partial<IGiveaway>) => Promise<void>;
 }) {
-  const [title, setTitle] = useState("");
-  const [prize, setPrize] = useState("");
-  const [endAt, setEndAt] = useState("");
-  const [desc, setDesc] = useState("");
+  const [title, setTitle] = useState('');
+  const [prize, setPrize] = useState('');
+  const [endAt, setEndAt] = useState('');
+  const [desc, setDesc] = useState('');
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
     setLoading(true);
     await onCreate({
-      title: title.trim() || "Untitled Giveaway",
+      title: title.trim() || 'Untitled Giveaway',
       prizeValue: Number(prize) || 0,
       endAt: endAt ? new Date(endAt).toISOString() : undefined,
-      status: "active",
+      status: 'active',
       description: desc.trim(),
     });
     setLoading(false);
-    setTitle("");
-    setPrize("");
-    setEndAt("");
-    setDesc("");
+    setTitle('');
+    setPrize('');
+    setEndAt('');
+    setDesc('');
     onClose();
   };
 
-  return (
-    <Modal visible={visible} transparent animationType="fade">
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={onClose}
+  const Input = ({
+    value,
+    onChangeText,
+    placeholder,
+    keyboardType,
+    multiline,
+  }: {
+    value: string;
+    onChangeText: (t: string) => void;
+    placeholder?: string;
+    keyboardType?: KeyboardTypeOptions;
+    multiline?: boolean;
+  }) => {
+    const resolvedKeyboardType: KeyboardTypeOptions =
+      Platform.OS === 'ios' && keyboardType === 'numeric'
+        ? 'number-pad'
+        : keyboardType ?? 'default';
+
+    return (
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#6b7280"
+        keyboardType={resolvedKeyboardType}
+        multiline={!!multiline}
         style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.6)",
-          justifyContent: "center",
-          padding: 22,
+          color: 'white',
+          borderWidth: 1,
+          borderColor: BaseColors.PanelBorderColor,
+          borderRadius: 8,
+          paddingHorizontal: 12,
+          paddingVertical: multiline ? 12 : 10,
+          minHeight: multiline ? 80 : undefined,
+          marginBottom: 10,
+          backgroundColor: '#16171a',
         }}
+      />
+    );
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
+      presentationStyle="overFullScreen"
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => {}}
+        <View
           style={{
-            backgroundColor: "#16171a",
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: BaseColors.PanelBorderColor,
-            padding: 16,
+            flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0,0,0,0.5)',
           }}
         >
-          <Text style={{ color: "white", fontWeight: "800", fontSize: 16 }}>
-            Create New Giveaway
-          </Text>
-
-          <View style={{ height: 10 }} />
-
-          <Text style={{ color: "#9ca3af", marginBottom: 6 }}>Title</Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Giveaway title"
-            placeholderTextColor="#6b7280"
+          <TouchableOpacity
             style={{
-              color: "white",
-              borderWidth: 1,
-              borderColor: BaseColors.PanelBorderColor,
-              borderRadius: 8,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              marginBottom: 10,
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              zIndex: -1,
             }}
+            onPress={onClose}
+            activeOpacity={1}
           />
 
-          <Text style={{ color: "#9ca3af", marginBottom: 6 }}>
-            Prize Value (USD)
-          </Text>
-          <TextInput
-            value={prize}
-            onChangeText={setPrize}
-            keyboardType="numeric"
-            placeholder="500"
-            placeholderTextColor="#6b7280"
-            style={{
-              color: "white",
-              borderWidth: 1,
-              borderColor: BaseColors.PanelBorderColor,
-              borderRadius: 8,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              marginBottom: 10,
-            }}
-          />
-
-          <Text style={{ color: "#9ca3af", marginBottom: 6 }}>
-            End Date (YYYY-MM-DD)
-          </Text>
-          <TextInput
-            value={endAt}
-            onChangeText={setEndAt}
-            placeholder="2025-09-15"
-            placeholderTextColor="#6b7280"
-            style={{
-              color: "white",
-              borderWidth: 1,
-              borderColor: BaseColors.PanelBorderColor,
-              borderRadius: 8,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              marginBottom: 10,
-            }}
-          />
-
-          <Text style={{ color: "#9ca3af", marginBottom: 6 }}>Description</Text>
-          <TextInput
-            value={desc}
-            onChangeText={setDesc}
-            placeholder="What will the winner receive?"
-            placeholderTextColor="#6b7280"
-            multiline
-            style={{
-              color: "white",
-              borderWidth: 1,
-              borderColor: BaseColors.PanelBorderColor,
-              borderRadius: 8,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              minHeight: 80,
-            }}
-          />
-
-          <View style={{ height: 14 }} />
           <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+            style={{
+              backgroundColor: '#0c0c0c',
+              borderTopLeftRadius: BasePaddingsMargins.m15,
+              borderTopRightRadius: BasePaddingsMargins.m15,
+              maxHeight: '90%',
+              position: 'relative',
+            }}
           >
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <LFButton type="danger" label="Cancel" onPress={onClose} />
+            {/* Fixed Header */}
+            <View
+              style={{
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                alignItems: 'stretch',
+                paddingHorizontal: 16,
+                paddingTop: 25,
+                paddingBottom: 15,
+                borderTopLeftRadius: BasePaddingsMargins.m15,
+                borderTopRightRadius: BasePaddingsMargins.m15,
+                backgroundColor: '#0c0c0c',
+                zIndex: 1000,
+                minHeight: 60,
+                position: 'relative',
+                overflow: 'hidden',
+                elevation: 5,
+              }}
+            >
+              <Text style={{ color: 'white', fontWeight: '800', fontSize: 18 }}>
+                + Create New Giveaway
+              </Text>
             </View>
-            <View style={{ flex: 1, marginLeft: 8 }}>
-              <LFButton
-                type="primary"
-                label={loading ? "Saving..." : "Save Giveaway"}
-                onPress={submit}
-                disabled={loading}
+
+            {/* Fixed Close Button */}
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                right: 16,
+                top: 20,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: '#222',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1001,
+              }}
+              onPress={onClose}
+            >
+              <Text style={{ color: '#fff', fontSize: 20 }}>×</Text>
+            </TouchableOpacity>
+
+            {/* Scrollable Content */}
+            <ScrollView
+              style={{
+                flex: 1,
+                backgroundColor: '#0c0c0c',
+              }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{
+                paddingTop: 20,
+                paddingBottom: 30,
+                paddingHorizontal: 16,
+              }}
+            >
+              <Text style={{ color: '#9ca3af', marginBottom: 6 }}>Title</Text>
+              <Input
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Giveaway title"
               />
+
+              <Text style={{ color: '#9ca3af', marginBottom: 6 }}>
+                Prize Value (USD)
+              </Text>
+              <Input
+                value={prize}
+                onChangeText={setPrize}
+                keyboardType="numeric"
+                placeholder="500"
+              />
+
+              <Text style={{ color: '#9ca3af', marginBottom: 6 }}>
+                End Date (YYYY-MM-DD)
+              </Text>
+              <Input
+                value={endAt}
+                onChangeText={setEndAt}
+                placeholder="2025-09-15"
+              />
+
+              <Text style={{ color: '#9ca3af', marginBottom: 6 }}>
+                Description
+              </Text>
+              <Input
+                value={desc}
+                onChangeText={setDesc}
+                placeholder="What will the winner receive?"
+                multiline
+              />
+            </ScrollView>
+
+            {/* Fixed Footer */}
+            <View
+              style={{
+                padding: 16,
+                borderTopWidth: 1,
+                borderTopColor: BaseColors.PanelBorderColor,
+                backgroundColor: '#0c0c0c',
+                flexDirection: 'row',
+                gap: 12,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <LFButton type="danger" label="Cancel" onPress={onClose} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <LFButton
+                  type="primary"
+                  label={loading ? 'Saving...' : 'Save Giveaway'}
+                  onPress={submit}
+                  disabled={loading}
+                />
+              </View>
             </View>
           </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 /* ----------------------------------------------------------------------------
-  Pick Winner Modal
+  Pick Winner Modal (unchanged – no typing here)
 ---------------------------------------------------------------------------- */
 function ModalPickWinner({
   visible,
@@ -350,6 +464,9 @@ function ModalPickWinner({
   const [entries, setEntries] = useState<IEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [picked, setPicked] = useState<IEntry | null>(null);
+  const [pickedEntryNumber, setPickedEntryNumber] = useState<number | null>(
+    null,
+  );
 
   useEffect(() => {
     (async () => {
@@ -363,23 +480,38 @@ function ModalPickWinner({
 
   const pick = async () => {
     if (!entries.length) return;
-    const idx = Math.floor(Math.random() * entries.length);
-    const e = entries[idx];
-    setPicked(e);
-    await onPicked(e);
+
+    // Generate random entry number between 1 and total entries
+    const randomEntryNumber = Math.floor(Math.random() * entries.length) + 1;
+
+    // Find entry with this number (or fallback to index-based selection)
+    const winner =
+      entries.find((e: any) => e.entry_number === randomEntryNumber) ||
+      entries[randomEntryNumber - 1];
+
+    if (winner) {
+      setPickedEntryNumber(randomEntryNumber);
+      setPicked(winner);
+      await onPicked(winner);
+    }
   };
 
   if (!giveaway) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <TouchableOpacity
         activeOpacity={1}
         onPress={onClose}
         style={{
           flex: 1,
-          backgroundColor: "rgba(0,0,0,0.6)",
-          justifyContent: "center",
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          justifyContent: 'center',
           padding: 22,
         }}
       >
@@ -387,19 +519,19 @@ function ModalPickWinner({
           activeOpacity={1}
           onPress={() => {}}
           style={{
-            backgroundColor: "#16171a",
+            backgroundColor: '#16171a',
             borderRadius: 12,
             borderWidth: 1,
             borderColor: BaseColors.PanelBorderColor,
             padding: 16,
           }}
         >
-          <Text style={{ color: "white", fontWeight: "800", fontSize: 16 }}>
+          <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>
             Pick Winner — {giveaway.title}
           </Text>
 
-          <Text style={{ color: "#9ca3af", marginTop: 8 }}>
-            Entries: {entries.length}
+          <Text style={{ color: '#9ca3af', marginTop: 8 }}>
+            Total Entries: {entries.length}
           </Text>
 
           <View style={{ height: 14 }} />
@@ -407,26 +539,39 @@ function ModalPickWinner({
           {picked ? (
             <View
               style={{
-                backgroundColor: "#0f172a",
+                backgroundColor: '#0f172a',
                 borderWidth: 1,
-                borderColor: "#1f2937",
+                borderColor: '#1f2937',
                 borderRadius: 10,
                 padding: 12,
               }}
             >
-              <Text style={{ color: "#34d399", fontWeight: "800" }}>
+              <Text
+                style={{ color: '#34d399', fontWeight: '800', fontSize: 18 }}
+              >
                 🎉 Winner Selected!
               </Text>
-              <Text style={{ color: "white", marginTop: 6 }}>
-                {picked.name || "Entry"}{" "}
-                <Text style={{ color: "#9ca3af" }}>{picked.email || ""}</Text>
+              <Text
+                style={{
+                  color: 'white',
+                  marginTop: 8,
+                  fontWeight: '700',
+                  fontSize: 16,
+                }}
+              >
+                Entry #{pickedEntryNumber} - {picked.name || 'Anonymous'}
               </Text>
+              {picked.email && (
+                <Text style={{ color: '#9ca3af', marginTop: 4, fontSize: 14 }}>
+                  {picked.email}
+                </Text>
+              )}
             </View>
           ) : null}
 
           <View style={{ height: 14 }} />
           <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
+            style={{ flexDirection: 'row', justifyContent: 'space-between' }}
           >
             <View style={{ flex: 1, marginRight: 8 }}>
               <LFButton type="danger" label="Close" onPress={onClose} />
@@ -434,7 +579,7 @@ function ModalPickWinner({
             <View style={{ flex: 1, marginLeft: 8 }}>
               <LFButton
                 type="primary"
-                label={loading ? "Loading..." : "Pick Random Winner"}
+                label={loading ? 'Loading...' : 'Pick Random Winner'}
                 onPress={pick}
                 disabled={loading || !!picked || !entries.length}
               />
@@ -452,7 +597,7 @@ function ModalPickWinner({
 export default function ShopManage({
   onCreateGift,
 }: {
-  onCreateGift?: () => void; // still supported if you need it elsewhere
+  onCreateGift?: () => void;
 }) {
   const [items, setItems] = useState<IGiveaway[]>([]);
   const [loading, setLoading] = useState(false);
@@ -464,20 +609,30 @@ export default function ShopManage({
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const data = await api.list();
-      setItems(data);
+      try {
+        const data = await api.list();
+        console.log('Fetched giveaways data:', data);
+        setItems(data);
+      } catch (error) {
+        console.error('Error fetching giveaways:', error);
+      }
       setLoading(false);
     })();
   }, []);
 
   const analytics = useMemo(() => {
-    const active = items.filter((g) => g.status === "active");
+    const active = items.filter((g) => g.status === 'active');
     const totalPrize = items.reduce((sum, g) => sum + (g.prizeValue || 0), 0);
     const totalEntries = items.reduce(
       (sum, g) => sum + (g.entriesCount || 0),
-      0
+      0,
     );
-    return { activeCount: active.length, totalEntries, totalPrize };
+    // Updated analytics: add any new metrics here if needed
+    return {
+      activeCount: active.length,
+      totalEntries: totalEntries,
+      totalPrize: totalPrize,
+    };
   }, [items]);
 
   const openPicker = (g: IGiveaway) => {
@@ -488,7 +643,7 @@ export default function ShopManage({
   const endGiveaway = async (g: IGiveaway) => {
     await api.end(g.id);
     setItems((prev) =>
-      prev.map((x) => (x.id === g.id ? { ...x, status: "ended" } : x))
+      prev.map((x) => (x.id === g.id ? { ...x, status: 'ended' } : x)),
     );
   };
 
@@ -501,14 +656,14 @@ export default function ShopManage({
     <>
       {/* Analytics */}
       <UIPanel>
-        <Text style={{ color: "white", fontWeight: "800", fontSize: 18 }}>
+        <Text style={{ color: 'white', fontWeight: '800', fontSize: 18 }}>
           Giveaway Analytics
         </Text>
 
         <View style={{ height: 10 }} />
 
         <View
-          style={{ flexDirection: "row", gap: 10 as any, flexWrap: "wrap" }}
+          style={{ flexDirection: 'row', gap: 10 as any, flexWrap: 'wrap' }}
         >
           <StatCard
             label="Active Giveaways"
@@ -527,7 +682,7 @@ export default function ShopManage({
 
       {/* Quick Actions */}
       <UIPanel>
-        <Text style={{ color: "white", fontWeight: "800", fontSize: 18 }}>
+        <Text style={{ color: 'white', fontWeight: '800', fontSize: 18 }}>
           Quick Actions
         </Text>
 
@@ -559,8 +714,8 @@ export default function ShopManage({
       <UIPanel>
         <Text
           style={{
-            color: "white",
-            fontWeight: "800",
+            color: 'white',
+            fontWeight: '800',
             fontSize: 18,
             marginBottom: 6,
           }}
@@ -569,9 +724,9 @@ export default function ShopManage({
         </Text>
 
         {loading ? (
-          <Text style={{ color: "#9ca3af", marginTop: 8 }}>Loading…</Text>
+          <Text style={{ color: '#9ca3af', marginTop: 8 }}>Loading…</Text>
         ) : items.length === 0 ? (
-          <Text style={{ color: "#9ca3af", marginTop: 8 }}>
+          <Text style={{ color: '#9ca3af', marginTop: 8 }}>
             No giveaways found.
           </Text>
         ) : (
@@ -589,13 +744,15 @@ export default function ShopManage({
         )}
       </UIPanel>
 
-      {/* Modals */}
+      {/* Modals — keep mounted, only toggle visibility */}
       <ModalCreateGiveaway
         visible={createOpen}
         onClose={() => setCreateOpen(false)}
         onCreate={async (payload) => {
           const created = await api.create(payload);
-          setItems((prev) => [created, ...prev]);
+          if (created) {
+            setItems((prev) => [created, ...prev]);
+          }
         }}
       />
       <ModalPickWinner
@@ -608,9 +765,9 @@ export default function ShopManage({
           setItems((prev) =>
             prev.map((x) =>
               x.id === current.id
-                ? { ...x, status: "ended", winnerEntryId: entry.id }
-                : x
-            )
+                ? { ...x, status: 'ended', winnerEntryId: entry.id }
+                : x,
+            ),
           );
         }}
       />
@@ -627,17 +784,17 @@ function StatCard({ label, value }: { label: string; value: string }) {
       style={{
         flexGrow: 1,
         minWidth: 110,
-        backgroundColor: "#0f1115",
+        backgroundColor: '#0f1115',
         borderWidth: 1,
         borderColor: BaseColors.PanelBorderColor,
         borderRadius: 10,
         padding: 14,
       }}
     >
-      <Text style={{ color: "#93c5fd", fontWeight: "800", fontSize: 18 }}>
+      <Text style={{ color: '#93c5fd', fontWeight: '800', fontSize: 18 }}>
         {value}
       </Text>
-      <Text style={{ color: "#9ca3af", marginTop: 6 }}>{label}</Text>
+      <Text style={{ color: '#9ca3af', marginTop: 6 }}>{label}</Text>
     </View>
   );
 }
@@ -656,24 +813,24 @@ function GiveawayCard({
   return (
     <View
       style={{
-        backgroundColor: "#141416",
+        backgroundColor: '#141416',
         borderWidth: 1,
         borderColor: BaseColors.PanelBorderColor,
         borderRadius: 12,
         padding: 12,
       }}
     >
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <StatusPill s={g.status} />
-        <Text style={{ color: "#60a5fa", fontWeight: "800" }}>
+        <Text style={{ color: '#60a5fa', fontWeight: '800' }}>
           {fmtMoney(g.prizeValue)}
         </Text>
       </View>
 
       <Text
         style={{
-          color: "white",
-          fontWeight: "800",
+          color: 'white',
+          fontWeight: '800',
           fontSize: 16,
           marginTop: 8,
         }}
@@ -681,26 +838,26 @@ function GiveawayCard({
         {g.title}
       </Text>
 
-      <View style={{ flexDirection: "row", marginTop: 6 }}>
-        <Text style={{ color: "#9ca3af" }}>Entries </Text>
-        <Text style={{ color: "white", fontWeight: "700" }}>
+      <View style={{ flexDirection: 'row', marginTop: 6 }}>
+        <Text style={{ color: '#9ca3af' }}>Entries </Text>
+        <Text style={{ color: 'white', fontWeight: '700' }}>
           {g.entriesCount}
         </Text>
-        <Text style={{ color: "#9ca3af" }}> · Ends {fmtDate(g.endAt)}</Text>
+        <Text style={{ color: '#9ca3af' }}> · Ends {fmtDate(g.endAt)}</Text>
       </View>
 
       <View style={{ height: 10 }} />
 
-      <View style={{ flexDirection: "row", gap: 10 as any }}>
+      <View style={{ flexDirection: 'row', gap: 10 as any }}>
         <View style={{ flex: 1 }}>
           <LFButton
             type="primary"
-            label={g.status === "ended" ? "View Winner" : "Pick Winner"}
+            label={g.status === 'ended' ? 'View Winner' : 'Pick Winner'}
             icon="shuffle"
             onPress={onPick}
           />
         </View>
-        {g.status !== "ended" ? (
+        {g.status !== 'ended' ? (
           <View style={{ width: 120 }}>
             <LFButton type="secondary" label="End" onPress={onEnd} />
           </View>
@@ -711,11 +868,11 @@ function GiveawayCard({
             width: 40,
             height: 40,
             borderRadius: 10,
-            backgroundColor: "#221416",
+            backgroundColor: '#221416',
             borderWidth: 1,
-            borderColor: "#7a1f1f",
-            alignItems: "center",
-            justifyContent: "center",
+            borderColor: '#7a1f1f',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <Ionicons name="trash" size={18} color="#ef4444" />

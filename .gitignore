@@ -37,3 +37,4 @@ yarn-error.*
 *.tsbuildinfo
 node_modules/
 .env
+.env.example

@@ -1,95 +1,149 @@
-import { IAlert } from "../hooks/InterfacesGlobal";
-import { supabase } from "./supabase";
+import { IAlert } from '../hooks/InterfacesGlobal';
+import { supabase } from './supabase';
 
-const AlertIAlertToObjectForData = (alert:IAlert)=>{
+/**
+ * Maps IAlert interface (with legacy fields) to search_alerts table schema
+ * Legacy field names are mapped to new schema field names
+ */
+const AlertIAlertToObjectForData = (alert: IAlert) => {
   return {
-    // updated_at:string,
-    creator_id:alert.creator_id,
-    name: alert.name,
-    preffered_game: alert.preffered_game,
-    fargo_range_from: alert.fargo_range_from,
-    fargo_range_to: alert.fargo_range_to,
+    // Map legacy fields to new schema
+    user_id: alert.creator_id || alert.user_id,
+    alert_name: alert.name || alert.alert_name,
+    game_type: alert.preffered_game || alert.game_type,
+    format: alert.tournament_format || alert.format,
+    table_size: alert.table_size,
+    min_fargo: alert.fargo_range_from || alert.min_fargo,
+    max_fargo: alert.fargo_range_to || alert.max_fargo,
     max_entry_fee: alert.max_entry_fee,
-    location: alert.location,
+    location_text: alert.location || alert.location_text,
+    city: alert.city,
+    state: alert.state,
     reports_to_fargo: alert.reports_to_fargo,
-    checked_open_tournament: alert.checked_open_tournament,
+    is_open_tournament:
+      alert.checked_open_tournament ?? alert.is_open_tournament,
+    required_fargo_games: alert.required_fargo_games,
+    equipment: alert.equipment,
+    date_from: alert.date_from,
+    date_to: alert.date_to,
+    is_enabled: alert.is_enabled ?? true,
   };
-}
+};
 
-export const CreateAlert = async (newAlert:IAlert)=>{
-  try{
-    const {data, error} = await supabase
-      .from('alerts')
-      .upsert(AlertIAlertToObjectForData(newAlert));
-  
-    return {error, data}
-  } 
-  catch(error){
-    return {data: null, error};
-  }
-}
+/**
+ * Maps search_alerts table data back to IAlert interface
+ * Includes both new and legacy field names for backward compatibility
+ */
+const MapSearchAlertToIAlert = (dbAlert: any): IAlert => {
+  return {
+    // New schema fields
+    id: dbAlert.id,
+    user_id: dbAlert.user_id,
+    alert_name: dbAlert.alert_name,
+    game_type: dbAlert.game_type,
+    format: dbAlert.format,
+    equipment: dbAlert.equipment,
+    reports_to_fargo: dbAlert.reports_to_fargo,
+    max_entry_fee: dbAlert.max_entry_fee,
+    min_fargo: dbAlert.min_fargo,
+    max_fargo: dbAlert.max_fargo,
+    required_fargo_games: dbAlert.required_fargo_games,
+    table_size: dbAlert.table_size,
+    is_open_tournament: dbAlert.is_open_tournament,
+    city: dbAlert.city,
+    state: dbAlert.state,
+    location_text: dbAlert.location_text,
+    date_from: dbAlert.date_from,
+    date_to: dbAlert.date_to,
+    is_enabled: dbAlert.is_enabled,
+    created_at: dbAlert.created_at,
+    updated_at: dbAlert.updated_at,
 
-export const UpdateAlert = async (alertId:string, newDetailsAlert:IAlert)=>{
-  try{
+    // Legacy fields for backward compatibility with UI
+    creator_id: dbAlert.user_id,
+    name: dbAlert.alert_name,
+    preffered_game: dbAlert.game_type,
+    tournament_format: dbAlert.format,
+    fargo_range_from: dbAlert.min_fargo || 0,
+    fargo_range_to: dbAlert.max_fargo || 0,
+    location: dbAlert.location_text,
+    checked_open_tournament: dbAlert.is_open_tournament,
+  } as IAlert;
+};
+
+export const CreateAlert = async (newAlert: IAlert) => {
+  try {
     const { data, error } = await supabase
-      .from('alerts')
+      .from('search_alerts')
+      .insert(AlertIAlertToObjectForData(newAlert))
+      .select();
+
+    return { error, data };
+  } catch (error) {
+    return { data: null, error };
+  }
+};
+
+export const UpdateAlert = async (alertId: string, newDetailsAlert: IAlert) => {
+  try {
+    const { data, error } = await supabase
+      .from('search_alerts')
       .update(AlertIAlertToObjectForData(newDetailsAlert))
       .eq('id', alertId)
       .select();
-  }
-  catch(error){
-  }
-}
 
-export const DeleteAlert = async (alertId:string)=>{
-  try{
+    return { error, data };
+  } catch (error) {
+    return { data: null, error };
+  }
+};
+
+export const DeleteAlert = async (alertId: string) => {
+  try {
     const { data, error } = await supabase
-      .from('alerts')
+      .from('search_alerts')
       .delete()
-      .eq('id', alertId)
-  }
-  catch(error){}
-}
+      .eq('id', alertId);
 
-export const GetAlerts = async (user_id:string):Promise<IAlert[]>=>{
-  try{
-    const {data, error} = await supabase
-      .from('alerts')
-      .select("*")
-      .eq('creator_id', user_id)
-      .order('updated_at', {ascending: false})
+    return { error, data };
+  } catch (error) {
+    return { data: null, error };
+  }
+};
+
+export const GetAlerts = async (user_id: string): Promise<IAlert[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('search_alerts')
+      .select('*')
+      .eq('user_id', user_id)
+      .order('updated_at', { ascending: false })
       .limit(10);
-    const alerts:IAlert[] = [];
-    if(data!==null)
-      for(let i=0;i<data.length;i++){
-        alerts.push( data[i] as IAlert );
+
+    const alerts: IAlert[] = [];
+    if (data !== null) {
+      for (let i = 0; i < data.length; i++) {
+        alerts.push(MapSearchAlertToIAlert(data[i]));
       }
+    }
     return alerts;
-  } 
-  catch(error){
+  } catch (error) {
     return [];
   }
-}
-export const GetAlertById = async (alertId:string):Promise<IAlert | null>=>{
-  try{
-    const {data, error} = await supabase
-      .from('alerts')
-      .select("*")
+};
+
+export const GetAlertById = async (alertId: string): Promise<IAlert | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('search_alerts')
+      .select('*')
       .eq('id', alertId);
-      // .order('updated_at', {ascending: false})
-      //.limit(10);
-      // // // // // // // // // // console.log('error:', error);
-      // // // // // // // // // // console.log('data:', data);
-    const alert:IAlert = data[0] as IAlert;
-    // // // // // // // // // // console.log('alert:', alert);
-    /*if(data!==null)
-      for(let i=0;i<data.length;i++){
-        alerts.push( data[i] as IAlert );
-      }
-    return alerts;*/
-    return alert;
-  } 
-  catch(error){
+
+    if (data && data.length > 0) {
+      return MapSearchAlertToIAlert(data[0]);
+    }
+    return null;
+  } catch (error) {
     return null;
   }
-}
+};

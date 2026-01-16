@@ -1,12 +1,14 @@
 {
   "expo": {
-    "name": "billiards-app-2",
-    "slug": "billiards-app-2",
-    "version": "1.0.0",
+    "name": "Compete",
+    "slug": "app",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
+    "scheme": "compete",
+    "entryPoint": "./index.js",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,8 +17,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIViewControllerBasedStatusBarAppearance": false
-      }
+        "UIViewControllerBasedStatusBarAppearance": false,
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.tyelerr.app",
+      "buildNumber": "247"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,10 +29,40 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.zlatkoflash.billiardsapp2"
+      "package": "com.tyelerr.app",
+      "versionCode": 207,
+      "softwareKeyboardLayoutMode": "pan",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "compete.com"
+            },
+            {
+              "scheme": "compete"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-font"],
+    "extra": {
+      "eas": {
+        "projectId": "ace0a5f7-de85-47f7-b4e7-d119de2e488e"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ace0a5f7-de85-47f7-b4e7-d119de2e488e"
     }
   }
 }
